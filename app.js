@@ -59,7 +59,6 @@ app.post('/login', async (request, response) => {
 
 app.post('/getusers', async (request, response) => {
     const body = request.body
-    console.log(body)
     if (body.empresaid) {
         const result = await prisma.user.findMany({
             where: {
@@ -78,10 +77,57 @@ app.post('/getusers', async (request, response) => {
             }
 
         })
-        console.log(result)
         return response.json(result)
     }
     return response.status(401)
 })
+
+app.post('/updatedadosusers', async (request, response) => {
+    const body = request.body
+    if (body.id) {
+        console.log(body)
+        const updateUser = await prisma.user.update({
+            where: {
+                id: Number(body.id)
+            },
+            data: {
+                email: body.email,
+                nome_completo: body.nome_completo,
+                cpf: body.cpf,
+                administrador: body.administrador,
+                cargo: body.cargo,
+                setor: body.setor
+            }
+
+        })
+        return response.json(updateUser)
+    }
+    return response.status(401)
+})
+
+app.post('/getdadosusers', async (request, response) => {
+    const body = request.body
+    console.log(body)
+    if (body.id) {
+        const result = await prisma.user.findFirst({
+            where: {
+                id: Number(body.id)
+            },
+            select: {
+                id: true,
+                email: true,
+                nome_completo: true,
+                cpf: true,
+                administrador: true,
+                cargo: true,
+                setor: true
+            }
+
+        })
+        return response.json(result)
+    }
+    return response.status(401)
+})
+
 
 app.listen(3334)
