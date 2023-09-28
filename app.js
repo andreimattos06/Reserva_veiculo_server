@@ -81,6 +81,28 @@ app.post('/getusers', async (request, response) => {
     return response.status(401)
 })
 
+app.post('/getveiculos', async (request, response) => {
+    const body = request.body
+    if (body.empresaid) {
+        const result = await prisma.carro.findMany({
+            where: {
+                empresaId: body.empresaid
+            },
+            select: {
+                id: true,
+                marca: true,
+                modelo: true,
+                placa: true,
+                identificacao: true,
+            }
+
+        })
+        return response.json(result)
+    }
+    return response.status(401)
+})
+
+
 app.post('/updatedadosusers', async (request, response) => {
     const body = request.body
     if (body.id) {
