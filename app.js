@@ -9,13 +9,13 @@ const allowedOrigins = ['http://localhost:3000'];
 
 const corsOptions = {
     origin: (origin, callback) => {
-      if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
+        if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
     },
-  };
+};
 
 function md5(content) {
     return createHash('md5').update(content).digest('hex')
@@ -48,7 +48,6 @@ app.post('/login', async (request, response) => {
                 empresa: true,
             }
         })
-        console.log(result)
         return response.json(result)
     }
     else {
@@ -85,7 +84,6 @@ app.post('/getusers', async (request, response) => {
 app.post('/updatedadosusers', async (request, response) => {
     const body = request.body
     if (body.id) {
-        console.log(body)
         const updateUser = await prisma.user.update({
             where: {
                 id: Number(body.id)
@@ -100,14 +98,13 @@ app.post('/updatedadosusers', async (request, response) => {
             }
 
         })
-        return response.json(updateUser)
+        return response.json("sucesso")
     }
     return response.status(401)
 })
 
 app.post('/getdadosusers', async (request, response) => {
     const body = request.body
-    console.log(body)
     if (body.id) {
         const result = await prisma.user.findFirst({
             where: {
@@ -129,5 +126,50 @@ app.post('/getdadosusers', async (request, response) => {
     return response.status(401)
 })
 
+app.post('/adduser', async (request, response) => {
+    const body = request.body
+    const consultacpfemail = await prisma.user.findFirst({
+        select: {
+            email: true,
+            cpf: true,
+        },
+        where: {
+            OR: [{
+                email: {
+                    equals: body.email
+                }
+            },
+            {
+                cpf: {
+                    equals: body.cpf
+                }
+            }
+
+            ],
+
+        }
+    })
+    if (consultacpfemail === null) {
+        const result = await prisma.user.create({
+            data: {
+                email: body.email,
+                nome_completo: body.nome_completo,
+                cpf: body.cpf,
+                cargo: body.cargo,
+                setor: body.setor,
+                senha: md5(body.senha),
+                administrador: body.administrador,
+                empresa: {
+                    connect: {
+                        id: body.empresaid
+                    }
+                }
+            }
+
+        })
+        return response.json("sucesso")
+    }
+    return response.json("CPF ou e mail já cadastrado na base.")
+})
 
 app.listen(3334)
