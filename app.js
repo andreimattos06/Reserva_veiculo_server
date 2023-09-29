@@ -125,6 +125,27 @@ app.post('/updatedadosusers', async (request, response) => {
     return response.status(401)
 })
 
+app.post('/updatedadosveiculo', async (request, response) => {
+    const body = request.body
+    console.log(body)
+    if (body.id) {
+        const updateUser = await prisma.carro.update({
+            where: {
+                id: Number(body.id)
+            },
+            data: {
+                marca: body.marca,
+                modelo: body.modelo,
+                placa: body.placa,
+                identificacao: body.identificacao,
+            }
+
+        })
+        return response.json("sucesso")
+    }
+    return response.status(401)
+})
+
 app.post('/getdadosusers', async (request, response) => {
     const body = request.body
     if (body.id) {
@@ -140,6 +161,27 @@ app.post('/getdadosusers', async (request, response) => {
                 administrador: true,
                 cargo: true,
                 setor: true
+            }
+
+        })
+        return response.json(result)
+    }
+    return response.status(401)
+})
+
+app.post('/getdadosveiculo', async (request, response) => {
+    const body = request.body
+    if (body.id) {
+        const result = await prisma.carro.findFirst({
+            where: {
+                id: Number(body.id)
+            },
+            select: {
+                id: true,
+                marca: true,
+                modelo: true,
+                placa: true,
+                identificacao: true,
             }
 
         })
@@ -192,6 +234,52 @@ app.post('/adduser', async (request, response) => {
         return response.json("sucesso")
     }
     return response.json("CPF ou e mail já cadastrado na base.")
+})
+
+app.post('/addveiculo', async (request, response) => {
+    const body = request.body
+
+    if (body) {
+        const result = await prisma.carro.create({
+            data: {
+                marca: body.marca,
+                modelo: body.modelo,
+                placa: body.placa,
+                identificacao: body.identificacao,
+                empresaId: body.empresaid,
+
+            }
+
+        })
+        return response.json("sucesso")
+    }
+    return response.json("Houve um erro no cadastramento.")
+})
+
+app.post('/deleteveiculo', async (request, response) => {
+    const body = request.body
+    if (body.id){
+        const result = await prisma.carro.delete({
+            where:{
+                id: Number(body.id)
+            }
+        })
+        return response.json("sucesso")
+    }
+    return response.json("Houve algum erro.")
+})
+
+app.post('/deleteuser', async (request, response) => {
+    const body = request.body
+    if (body.id){
+        const result = await prisma.user.delete({
+            where:{
+                id: Number(body.id)
+            }
+        })
+        return response.json("sucesso")
+    }
+    return response.json("Houve algum erro.")
 })
 
 app.listen(3334)
