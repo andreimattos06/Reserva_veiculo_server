@@ -357,6 +357,27 @@ app.post('/addveiculo', async (request, response) => {
     return response.json("Houve um erro no cadastramento.")
 })
 
+app.post('/addmarcacao', async (request, response) => {
+    const body = request.body
+    console.log(body)
+    if (body) {
+        const result = await prisma.marcacao.create({
+            data: {
+                destino: body.destino,
+                data_inicio: body.data_partida,
+                data_fim: body.data_retorno,
+                observacao: body.observacao,
+                carroId: body.veiculo,
+                userEmail: body.email,
+
+            }
+
+        })
+        return response.json("sucesso")
+    }
+    return response.json("Houve um erro no cadastramento.")
+})
+
 app.post('/deleteveiculo', async (request, response) => {
     const body = request.body
     if (body.id) {
