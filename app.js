@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto'
 import cors from 'cors';
 
 const app = express()
-
+/*
 const allowedOrigins = ['http://localhost:3000'];
 
 const corsOptions = {
@@ -16,6 +16,7 @@ const corsOptions = {
         }
     },
 };
+*/
 
 function md5(content) {
     return createHash('md5').update(content).digest('hex')
@@ -27,7 +28,8 @@ const prisma = new PrismaClient({
 })
 
 
-app.use(cors(corsOptions));
+//app.use(cors(corsOptions));
+app.use(cors());
 app.use(express.json())
 
 
@@ -180,7 +182,7 @@ app.post('/updatesenha', async (request, response) => {
                 id: true,
             }
         })
-        
+
         if (get_user != null) {
             const update_senha = await prisma.user.update({
                 where: {
@@ -193,7 +195,7 @@ app.post('/updatesenha', async (request, response) => {
             })
             return response.json("sucesso")
         }
-        else{
+        else {
             return response.json("Senha inválida.")
         }
 
@@ -207,7 +209,7 @@ app.post('/updatesenha', async (request, response) => {
 
 app.post('/updatedadosveiculo', async (request, response) => {
     const body = request.body
-      if (body.id) {
+    if (body.id) {
         const updateUser = await prisma.carro.update({
             where: {
                 id: Number(body.id)
@@ -402,6 +404,104 @@ app.post('/deleteuser', async (request, response) => {
         return response.json("sucesso")
     }
     return response.json("Houve algum erro.")
+})
+
+app.post('/getmarcacoes', async (request, response) => {
+    const body = request.body
+    console.log(body)
+    if (body) {
+        const result = await prisma.marcacao.findMany({
+            where: {
+                AND: [
+                    {
+                        data_inicio: {
+                            gte: new Date(body.data_inicio)
+                        }
+
+                    },
+                    {
+                        data_inicio: {
+                            lte: new Date(body.data_fim)
+                        }
+
+                    }
+                ]
+            }
+        })
+        return response.json(result)
+    }
+    return response.json("Houve algum erro.")
+})
+
+app.post('/getveiculosdisponiveis', async (request, response) => {
+    const body = request.body;
+    console.log(body);
+
+    if (body) {
+        const marcacoes = await prisma.marcacao.findMany({
+            where: {
+                carro: {
+                    empresaId: Number(body.empresa)
+                },
+                OR: [
+                    {
+                        AND: [
+                            {
+                                data_inicio: {
+                                    gte: new Date(body.primeirodia),
+                                },
+                            },
+                            {
+                                data_inicio: {
+                                    lte: new Date(body.ultimodia),
+                                },
+                            }
+
+                        ],
+                    },
+                    {
+                        AND: [
+                            {
+                                data_fim: {
+                                    gte: new Date(body.primeirodia),
+                                },
+                            },
+                            {
+                                data_fim: {
+                                    lte: new Date(body.ultimodia),
+                                },
+                            }
+
+                        ],
+                    }
+                ]
+
+
+            },
+            orderBy: {
+                data_inicio: 'asc',
+            },
+            select: {
+                id: true,
+                destino: true,
+                data_inicio: true,
+                data_fim: true,
+                observacao: true,
+                usuario: {
+                    select:{
+                        email: true,
+                        nome_completo: true,
+                    }
+                },
+                carro: true,
+
+            }
+        });
+
+        return response.json(marcacoes);
+    }
+
+    return response.json("Houve algum erro.");
 })
 
 app.listen(3334)
