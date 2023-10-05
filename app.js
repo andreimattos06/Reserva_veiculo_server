@@ -406,7 +406,7 @@ app.post('/deleteuser', async (request, response) => {
     return response.json("Houve algum erro.")
 })
 
-app.post('/getmarcacoes', async (request, response) => {
+/*app.post('/getmarcacoes', async (request, response) => {
     const body = request.body
     console.log(body)
     if (body) {
@@ -431,52 +431,29 @@ app.post('/getmarcacoes', async (request, response) => {
         return response.json(result)
     }
     return response.json("Houve algum erro.")
-})
+}) */
 
-app.post('/getveiculosdisponiveis', async (request, response) => {
+app.post('/getcarrosindisponiveis', async (request, response) => {
     const body = request.body;
-    console.log(body);
-
+    console.log(body)
     if (body) {
         const marcacoes = await prisma.marcacao.findMany({
             where: {
                 carro: {
                     empresaId: Number(body.empresa)
                 },
-                OR: [
+                AND: [
                     {
-                        AND: [
-                            {
-                                data_inicio: {
-                                    gte: new Date(body.primeirodia),
-                                },
-                            },
-                            {
-                                data_inicio: {
-                                    lte: new Date(body.ultimodia),
-                                },
-                            }
-
-                        ],
+                        data_inicio:{
+                            lte: new Date(body.ultimodia)
+                        }
                     },
                     {
-                        AND: [
-                            {
-                                data_fim: {
-                                    gte: new Date(body.primeirodia),
-                                },
-                            },
-                            {
-                                data_fim: {
-                                    lte: new Date(body.ultimodia),
-                                },
-                            }
-
-                        ],
+                        data_fim:{
+                            gte: new Date(body.primeirodia)
+                        }
                     }
                 ]
-
-
             },
             orderBy: {
                 data_inicio: 'asc',
@@ -491,13 +468,76 @@ app.post('/getveiculosdisponiveis', async (request, response) => {
                     select:{
                         email: true,
                         nome_completo: true,
-                    }
+                    },  
                 },
                 carro: true,
-
             }
         });
+        return response.json(marcacoes);
+    }
 
+    return response.json("Houve algum erro.");
+})
+
+app.post('/getmarcacoesmes', async (request, response) => {
+    const body = request.body;
+    if (body) {
+        const marcacoes = await prisma.marcacao.findMany({
+            where: {
+                carro: {
+                    empresaId: Number(body.empresa)
+                },
+                OR: [
+                    {
+                        AND: [
+                            {
+                                data_inicio: {
+                                    gte: body.data_partida,
+                                },
+                            },
+                            {
+                                data_inicio: {
+                                    lte: body.data_retorno,
+                                },
+                            }
+
+                        ],
+                    },
+                    {
+                        AND: [
+                            {
+                                data_fim: {
+                                    gte: body.data_partida,
+                                },
+                            },
+                            {
+                                data_fim: {
+                                    lte: body.data_retorno,
+                                },
+                            }
+
+                        ],
+                    }
+                ]
+            },
+            orderBy: {
+                data_inicio: 'asc',
+            },
+            select: {
+                id: true,
+                destino: true,
+                data_inicio: true,
+                data_fim: true,
+                observacao: true,
+                usuario: {
+                    select:{
+                        email: true,
+                        nome_completo: true,
+                    },  
+                },
+                carro: true,
+            }
+        });
         return response.json(marcacoes);
     }
 
