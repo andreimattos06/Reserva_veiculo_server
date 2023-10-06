@@ -369,7 +369,7 @@ app.post('/addmarcacao', async (request, response) => {
                 data_inicio: body.data_partida,
                 data_fim: body.data_retorno,
                 observacao: body.observacao,
-                carroId: body.veiculo,
+                carroId: Number(body.veiculo),
                 userEmail: body.email,
 
             }
