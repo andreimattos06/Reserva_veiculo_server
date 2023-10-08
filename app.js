@@ -2,6 +2,7 @@ import { PrismaClient } from '@prisma/client'
 import express from 'express'
 import { createHash } from 'node:crypto'
 import cors from 'cors';
+import { request } from 'node:http';
 
 const app = express()
 /*
@@ -32,6 +33,9 @@ const prisma = new PrismaClient({
 app.use(cors());
 app.use(express.json())
 
+app.get('/', async (request, response) =>{
+    response.send("Ok")
+})
 
 app.post('/login', async (request, response) => {
     const body = request.body
