@@ -85,6 +85,7 @@ app.post('/getusers', async (request, response) => {
 
 app.post('/getveiculos', async (request, response) => {
     const body = request.body
+    console.log(body)
     if (body.empresaid) {
         const result = await prisma.carro.findMany({
             where: {
