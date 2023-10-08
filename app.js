@@ -2,7 +2,6 @@ import { PrismaClient } from '@prisma/client'
 import express from 'express'
 import { createHash } from 'node:crypto'
 import cors from 'cors';
-import { request } from 'node:http';
 
 const app = express()
 /*
@@ -35,6 +34,12 @@ app.use(express.json())
 
 app.get('/', async (request, response) =>{
     response.send("Ok")
+    const users = prisma.user.findMany({
+        select:{
+            nome_completo: true,
+        }
+    })
+    return response.json(users)
 })
 
 app.post('/login', async (request, response) => {
