@@ -553,4 +553,7 @@ app.post('/getmarcacoesmes', async (request, response) => {
     return response.json("Houve algum erro.");
 })
 
-app.listen(process.env.PORT)
+app.listen({
+    host: '0.0.0.0',
+    port: process.env.PORT ? Number(process.env.PORT) : 3333,
+})
