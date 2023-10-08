@@ -33,7 +33,6 @@ app.use(cors());
 app.use(express.json())
 
 app.get('/', async (request, response) =>{
-    response.send("Ok")
     const users = prisma.user.findMany({
         select:{
             nome_completo: true,
