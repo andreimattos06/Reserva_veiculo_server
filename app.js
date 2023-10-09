@@ -32,14 +32,6 @@ const prisma = new PrismaClient({
 app.use(cors());
 app.use(express.json())
 
-app.get('/', async (request, response) =>{
-    const users = prisma.user.findMany({
-        select:{
-            nome_completo: true,
-        }
-    })
-    return response.json(users)
-})
 
 app.post('/login', async (request, response) => {
     const body = request.body
@@ -281,6 +273,58 @@ app.post('/getdados', async (request, response) => {
     return response.status(401)
 })
 
+app.post('/getmarcacoesdia', async (request, response) => {
+    const body = request.body
+    let inicio = body.data + "T00:00:00.000Z"
+    let fim = body.data + "T23:59:59.000Z"
+    console.log(new Date(inicio))
+    console.log(new Date(fim))
+    if (body.empresa) {
+        const result = await prisma.marcacao.findMany({
+            where: {
+                AND: [
+                    {
+                        data_inicio: {
+                            lte: new Date(fim)
+                        }
+                    },
+                    {
+                        data_fim: {
+                            gte: new Date(inicio)
+                        }
+                    }
+                ],
+
+                empresaId: Number(body.empresa),
+
+            },
+            select: {
+                destino: true,
+                data_inicio: true,
+                data_fim: true,
+                observacao: true,
+                carro: {
+                    select: {
+                        marca: true,
+                        modelo: true,
+                        placa: true,
+                        identificacao: true
+                    }
+                },
+                usuario: {
+                    select: {
+                        nome_completo: true,
+                    }
+                }
+
+            }
+
+        })
+        return response.json(result)
+    }
+    return response.status(401)
+})
+
 app.post('/getdadosveiculo', async (request, response) => {
     const body = request.body
     if (body.id) {
@@ -370,7 +414,6 @@ app.post('/addveiculo', async (request, response) => {
 
 app.post('/addmarcacao', async (request, response) => {
     const body = request.body
-    console.log(body)
     if (body) {
         const result = await prisma.marcacao.create({
             data: {
@@ -380,6 +423,7 @@ app.post('/addmarcacao', async (request, response) => {
                 observacao: body.observacao,
                 carroId: Number(body.veiculo),
                 userEmail: body.email,
+                empresaId: body.empresa,
 
             }
 
@@ -444,7 +488,6 @@ app.post('/deleteuser', async (request, response) => {
 
 app.post('/getcarrosindisponiveis', async (request, response) => {
     const body = request.body;
-    console.log(body)
     if (body) {
         const marcacoes = await prisma.marcacao.findMany({
             where: {
@@ -453,12 +496,12 @@ app.post('/getcarrosindisponiveis', async (request, response) => {
                 },
                 AND: [
                     {
-                        data_inicio:{
+                        data_inicio: {
                             lte: new Date(body.ultimodia)
                         }
                     },
                     {
-                        data_fim:{
+                        data_fim: {
                             gte: new Date(body.primeirodia)
                         }
                     }
@@ -474,10 +517,10 @@ app.post('/getcarrosindisponiveis', async (request, response) => {
                 data_fim: true,
                 observacao: true,
                 usuario: {
-                    select:{
+                    select: {
                         email: true,
                         nome_completo: true,
-                    },  
+                    },
                 },
                 carro: true,
             }
@@ -493,9 +536,9 @@ app.post('/getmarcacoesmes', async (request, response) => {
     if (body) {
         const marcacoes = await prisma.marcacao.findMany({
             where: {
-                carro: {
-                    empresaId: Number(body.empresa)
-                },
+
+                empresaId: Number(body.empresa),
+
                 OR: [
                     {
                         AND: [
@@ -539,10 +582,10 @@ app.post('/getmarcacoesmes', async (request, response) => {
                 data_fim: true,
                 observacao: true,
                 usuario: {
-                    select:{
+                    select: {
                         email: true,
                         nome_completo: true,
-                    },  
+                    },
                 },
                 carro: true,
             }
@@ -552,6 +595,7 @@ app.post('/getmarcacoesmes', async (request, response) => {
 
     return response.json("Houve algum erro.");
 })
+
 
 app.listen({
     host: '0.0.0.0',

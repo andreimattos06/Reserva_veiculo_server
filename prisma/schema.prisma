@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
- provider = "postgresql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -51,12 +51,16 @@ model Marcacao {
 
   usuario   User   @relation(fields: [userEmail], references: [email])
   userEmail String
+
+  empresa   Empresa @relation(fields: [empresaId], references: [id])
+  empresaId Int
 }
 
 model Empresa {
-  id     Int     @id @default(autoincrement())
-  nome   String
-  numero String
-  User   User[]
-  Carros Carro[]
+  id       Int        @id @default(autoincrement())
+  nome     String
+  numero   String
+  User     User[]
+  Carros   Carro[]
+  Marcacao Marcacao[]
 }
