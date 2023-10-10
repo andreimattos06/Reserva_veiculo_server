@@ -85,7 +85,6 @@ app.post('/getusers', async (request, response) => {
 
 app.post('/getveiculos', async (request, response) => {
     const body = request.body
-    console.log(body)
     if (body.empresaid) {
         const result = await prisma.carro.findMany({
             where: {
@@ -97,6 +96,36 @@ app.post('/getveiculos', async (request, response) => {
                 modelo: true,
                 placa: true,
                 identificacao: true,
+            }
+
+        })
+        return response.json(result)
+    }
+    return response.status(401)
+})
+
+app.post('/getreservas', async (request, response) => {
+    const body = request.body
+    if (body.email) {
+        const result = await prisma.marcacao.findMany({
+            where: {
+                usuario:{
+                    email: body.email
+                }
+            },
+            select: {
+                destino: true,
+                data_inicio: true,
+                data_fim: true,
+                observacao: true,
+                carro:{
+                    select:{
+                        marca: true,
+                        modelo: true,
+                        placa: true,
+                        identificacao: true,
+                    }
+                }
             }
 
         })
@@ -172,7 +201,6 @@ app.post('/updatedados', async (request, response) => {
 
 app.post('/updatesenha', async (request, response) => {
     const body = request.body
-    console.log(body)
     if (body.senhaantiga && body.senhanova && body.id) {
         const get_user = await prisma.user.findFirst({
             where: {
@@ -277,8 +305,6 @@ app.post('/getmarcacoesdia', async (request, response) => {
     const body = request.body
     let inicio = body.data + "T00:00:00.000Z"
     let fim = body.data + "T23:59:59.000Z"
-    console.log(new Date(inicio))
-    console.log(new Date(fim))
     if (body.empresa) {
         const result = await prisma.marcacao.findMany({
             where: {
@@ -461,7 +487,6 @@ app.post('/deleteuser', async (request, response) => {
 
 /*app.post('/getmarcacoes', async (request, response) => {
     const body = request.body
-    console.log(body)
     if (body) {
         const result = await prisma.marcacao.findMany({
             where: {
