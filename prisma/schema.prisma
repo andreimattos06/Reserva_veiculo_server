@@ -49,10 +49,10 @@ model Marcacao {
   carro   Carro @relation(fields: [carroId], references: [id])
   carroId Int
 
-  usuario   User   @relation(fields: [userEmail], references: [email])
+  usuario   User   @relation(fields: [userEmail], references: [email], onDelete: Cascade, onUpdate: Cascade)
   userEmail String
 
-  empresa   Empresa @relation(fields: [empresaId], references: [id])
+  empresa   Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   empresaId Int
 }
 
@@ -61,6 +61,6 @@ model Empresa {
   nome     String
   numero   String
   User     User[]
-  Carros   Carro[]
-  Marcacao Marcacao[]
+  Carros   Carro[] 
+  Marcacao Marcacao[] 
 }

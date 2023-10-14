@@ -2,6 +2,7 @@ import { PrismaClient } from '@prisma/client'
 import express from 'express'
 import { createHash } from 'node:crypto'
 import cors from 'cors';
+import jwt from 'jsonwebtoken'
 
 const app = express()
 /*
@@ -20,6 +21,39 @@ const corsOptions = {
 
 function md5(content) {
     return createHash('md5').update(content).digest('hex')
+}
+
+function verifyJWT(req, res, next){
+    const token = req.headers['authorization'];
+    if (!token){
+        return res.status(401).json("No token provided.")
+    }
+
+    jwt.verify(token, process.env.SECRET, function(err, decoded){
+        if (err){
+            return res.status(500).json("Failed to authenticate token")
+        }
+        req.userId = decoded.id,
+        req.administrador = decoded.administrador;
+        next()
+    })
+}
+
+
+function verifyJWTAdmin(req, res, next){
+    const token = req.headers['authorization'];
+    if (!token){
+        return res.status(401).json("No token provided.")
+    }
+
+    jwt.verify(token, process.env.SECRET, function(err, decoded){
+        if (err || decoded.administrador != true){
+            return res.status(500).json("Failed to authenticate token")
+        }
+        req.userId = decoded.id,
+        req.administrador = decoded.administrador;
+        next()
+    })
 }
 
 
@@ -48,9 +82,14 @@ app.post('/login', async (request, response) => {
                 nome_completo: true,
                 administrador: true,
                 empresa: true,
+                id: true,
             }
         })
-        return response.json(result)
+        if (result != null){
+            const token = jwt.sign({id: result.id, administrador: result.administrador}, process.env.SECRET, {expiresIn: 900})
+            return response.json({...result, token})
+        }
+        
     }
     else {
         return response.status(401)
@@ -58,7 +97,7 @@ app.post('/login', async (request, response) => {
 
 })
 
-app.post('/getusers', async (request, response) => {
+app.post('/getusers', verifyJWTAdmin, async (request, response) => {
     const body = request.body
     if (body.empresaid) {
         const result = await prisma.user.findMany({
@@ -83,7 +122,7 @@ app.post('/getusers', async (request, response) => {
     return response.status(401)
 })
 
-app.post('/getveiculos', async (request, response) => {
+app.post('/getveiculos', verifyJWTAdmin,  async (request, response) => {
     const body = request.body
     if (body.empresaid) {
         const result = await prisma.carro.findMany({
@@ -104,7 +143,7 @@ app.post('/getveiculos', async (request, response) => {
     return response.status(401)
 })
 
-app.post('/getreservas', async (request, response) => {
+app.post('/getreservas', verifyJWT, async (request, response) => {
     const body = request.body
     if (body.email) {
         const result = await prisma.marcacao.findMany({
@@ -135,7 +174,7 @@ app.post('/getreservas', async (request, response) => {
 })
 
 
-app.post('/updatedadosusers', async (request, response) => {
+app.post('/updatedadosusers', verifyJWTAdmin, async (request, response) => {
     const body = request.body
     if (body.id) {
         const updateUser = await prisma.user.update({
@@ -157,7 +196,7 @@ app.post('/updatedadosusers', async (request, response) => {
     return response.status(401)
 })
 
-app.post('/updatedados', async (request, response) => {
+app.post('/updatedados', verifyJWT, async (request, response) => {
     const body = request.body
     if (body.id && body.email) {
         const get_email = await prisma.user.findFirst({
@@ -199,7 +238,7 @@ app.post('/updatedados', async (request, response) => {
 
 })
 
-app.post('/updatesenha', async (request, response) => {
+app.post('/updatesenha', verifyJWT, async (request, response) => {
     const body = request.body
     if (body.senhaantiga && body.senhanova && body.id) {
         const get_user = await prisma.user.findFirst({
@@ -236,7 +275,7 @@ app.post('/updatesenha', async (request, response) => {
 })
 
 
-app.post('/updatedadosveiculo', async (request, response) => {
+app.post('/updatedadosveiculo', verifyJWTAdmin, async (request, response) => {
     const body = request.body
     if (body.id) {
         const updateUser = await prisma.carro.update({
@@ -256,7 +295,7 @@ app.post('/updatedadosveiculo', async (request, response) => {
     return response.status(401)
 })
 
-app.post('/getdadosusers', async (request, response) => {
+app.post('/getdadosusers', verifyJWTAdmin, async (request, response) => {
     const body = request.body
     if (body.id) {
         const result = await prisma.user.findFirst({
@@ -279,7 +318,7 @@ app.post('/getdadosusers', async (request, response) => {
     return response.status(401)
 })
 
-app.post('/getdados', async (request, response) => {
+app.post('/getdados', verifyJWT, async (request, response) => {
     const body = request.body
     if (body.email) {
         const result = await prisma.user.findFirst({
@@ -301,7 +340,7 @@ app.post('/getdados', async (request, response) => {
     return response.status(401)
 })
 
-app.post('/getmarcacoesdia', async (request, response) => {
+app.post('/getmarcacoesdia', verifyJWT, async (request, response) => {
     const body = request.body
     let inicio = body.data + "T00:00:00.000Z"
     let fim = body.data + "T23:59:59.000Z"
@@ -351,7 +390,7 @@ app.post('/getmarcacoesdia', async (request, response) => {
     return response.status(401)
 })
 
-app.post('/getdadosveiculo', async (request, response) => {
+app.post('/getdadosveiculo', verifyJWTAdmin, async (request, response) => {
     const body = request.body
     if (body.id) {
         const result = await prisma.carro.findFirst({
@@ -372,7 +411,7 @@ app.post('/getdadosveiculo', async (request, response) => {
     return response.status(401)
 })
 
-app.post('/adduser', async (request, response) => {
+app.post('/adduser', verifyJWTAdmin, async (request, response) => {
     const body = request.body
     const consultacpfemail = await prisma.user.findFirst({
         select: {
@@ -418,7 +457,7 @@ app.post('/adduser', async (request, response) => {
     return response.json("CPF ou e mail já cadastrado na base.")
 })
 
-app.post('/addveiculo', async (request, response) => {
+app.post('/addveiculo', verifyJWTAdmin, async (request, response) => {
     const body = request.body
 
     if (body) {
@@ -438,7 +477,7 @@ app.post('/addveiculo', async (request, response) => {
     return response.json("Houve um erro no cadastramento.")
 })
 
-app.post('/addmarcacao', async (request, response) => {
+app.post('/addmarcacao', verifyJWT, async (request, response) => {
     const body = request.body
     if (body) {
         const result = await prisma.marcacao.create({
@@ -459,7 +498,7 @@ app.post('/addmarcacao', async (request, response) => {
     return response.json("Houve um erro no cadastramento.")
 })
 
-app.post('/deleteveiculo', async (request, response) => {
+app.post('/deleteveiculo', verifyJWTAdmin, async (request, response) => {
     const body = request.body
     if (body.id) {
         const result = await prisma.carro.delete({
@@ -472,7 +511,7 @@ app.post('/deleteveiculo', async (request, response) => {
     return response.json("Houve algum erro.")
 })
 
-app.post('/deleteuser', async (request, response) => {
+app.post('/deleteuser', verifyJWTAdmin, async (request, response) => {
     const body = request.body
     if (body.id) {
         const result = await prisma.user.delete({
@@ -511,7 +550,7 @@ app.post('/deleteuser', async (request, response) => {
     return response.json("Houve algum erro.")
 }) */
 
-app.post('/getcarrosindisponiveis', async (request, response) => {
+app.post('/getcarrosindisponiveis', verifyJWT, async (request, response) => {
     const body = request.body;
     if (body) {
         const marcacoes = await prisma.marcacao.findMany({
@@ -556,7 +595,7 @@ app.post('/getcarrosindisponiveis', async (request, response) => {
     return response.json("Houve algum erro.");
 })
 
-app.post('/getmarcacoesmes', async (request, response) => {
+app.post('/getmarcacoesmes', verifyJWT, async (request, response) => {
     const body = request.body;
     if (body) {
         const marcacoes = await prisma.marcacao.findMany({
