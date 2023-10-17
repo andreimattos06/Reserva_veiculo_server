@@ -129,8 +129,9 @@ app.post('/login', async (request, response) => {
 
     }
     else {
-        return response.status(401)
+        return response.json(null)
     }
+    return response.json(null)
 
 })
 
