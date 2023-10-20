@@ -34,7 +34,7 @@ function verifyJWT(req, res, next) {
             return res.status(500).json("Failed to authenticate token")
         }
         req.userId = decoded.id,
-        req.administrador = decoded.administrador
+            req.administrador = decoded.administrador
         next()
     })
 }
@@ -137,14 +137,25 @@ app.post('/login', async (request, response) => {
 
 app.post('/getusers', verifyJWTAdmin, async (request, response) => {
     const body = request.body
-    if (body.empresaid) {
+
+    if (body.empresaid && request.userId != null) {
         const result = await prisma.user.findMany({
             where: {
-                empresa: {
-                    some: {
-                        id: Number(body.empresaid)
+                AND: [
+                    {
+                        empresa: {
+                            some: {
+                                id: Number(body.empresaid)
+                            }
+                        }
+                    },
+                    {
+                        NOT:{
+                            id: request.userId
+                        }
                     }
-                }
+                ]
+
             },
             select: {
                 id: true,
@@ -195,6 +206,7 @@ app.post('/getreservas', verifyJWT, async (request, response) => {
                 data_inicio: true,
                 data_fim: true,
                 observacao: true,
+                id: true,
                 carro: {
                     select: {
                         marca: true,
@@ -542,6 +554,22 @@ app.post('/deleteveiculo', verifyJWTAdmin, async (request, response) => {
         const result = await prisma.carro.delete({
             where: {
                 id: Number(body.id)
+            }
+        })
+        return response.json("sucesso")
+    }
+    return response.json("Houve algum erro.")
+})
+
+app.post('/deletereserva', verifyJWT, async (request, response) => {
+    const body = request.body
+    if (body.id && request.userId != null) {
+        const result = await prisma.marcacao.delete({
+            where: {
+                id: Number(body.id),
+                usuario:{
+                    id: request.userId
+                }
             }
         })
         return response.json("sucesso")

@@ -46,7 +46,7 @@ model Marcacao {
   criado      DateTime @default(now())
   observacao  String
 
-  carro   Carro @relation(fields: [carroId], references: [id])
+  carro   Carro @relation(fields: [carroId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   carroId Int
 
   usuario   User   @relation(fields: [userEmail], references: [email], onDelete: Cascade, onUpdate: Cascade)
